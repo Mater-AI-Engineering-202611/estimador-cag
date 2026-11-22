@@ -1,0 +1,33 @@
+name: Tests - Estimador CAG
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Python y uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: uv sync --frozen
+
+      - name: Comprobar estructura
+        run: |
+          test -f app/main.py
+          test -f app/config.py
+          test -f app/context/examples.py
+          test -f app/services/llm_service.py
+          test -f app/routers/estimations.py
+          test -f app/schemas/estimation.py
+
+      - name: Ejecutar tests
+        run: uv run python -m pytest -v
