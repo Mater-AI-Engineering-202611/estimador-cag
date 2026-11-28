@@ -4,7 +4,7 @@ from app.routers.estimations import router as estimations_router
 app = FastAPI(
     title="Estimador CAG",
     description="API para estimaciones de software mediante IA",
-    version="1.0.0"
+    version="0.2.0"
 )
 
 
