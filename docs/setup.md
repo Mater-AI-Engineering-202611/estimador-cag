@@ -2,164 +2,124 @@
 
 ## 1. Requisitos previos
 
-Para ejecutar el proyecto necesitamos:
-
 - Python 3.11 o superior.
 - uv como gestor de dependencias.
 - Git.
-- Una API Key de OpenAI.
+- API Key de OpenAI para llamadas reales.
 - Visual Studio Code (recomendado).
 
 ### 1.1. Instalar Python
 
-Descargar Python desde:
-
-https://www.python.org/downloads/
-
-Comprobar la instalación desde PowerShell:
+Descargar desde https://www.python.org/downloads/ y comprobar en PowerShell:
 
 ```powershell
 python --version
 ```
 
-El proyecto utiliza Python 3.11.
-
 ### 1.2. Instalar uv
 
-`uv` es el gestor de dependencias y entornos virtuales utilizado en este proyecto.
-
-**Instalación en Windows (PowerShell):**
+En Windows (PowerShell):
 
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Una vez instalado, cerrar y volver a abrir PowerShell si fuera necesario.
-
-Comprobar la instalación:
+Cerrar y volver a abrir la terminal si es necesario.
 
 ```powershell
 uv --version
 ```
 
-Documentación oficial:
-
-https://docs.astral.sh/uv/getting-started/installation/
+Documentación: https://docs.astral.sh/uv/getting-started/installation/
 
 ### 1.3. Obtener una API Key de OpenAI
 
-Para utilizar el modelo de inteligencia artificial necesitamos una API Key de OpenAI.
+Acceder a https://platform.openai.com/api-keys, iniciar sesión y crear una clave. Guardarla de forma segura. Puede ser necesario configurar la facturación para realizar llamadas reales.
 
-**Pasos:**
-
-1. Acceder a https://platform.openai.com/
-2. Iniciar sesión o crear una cuenta.
-3. Acceder a https://platform.openai.com/api-keys
-4. Seleccionar **Create new secret key**.
-5. Crear la clave y copiarla.
-6. Guardarla de forma segura para configurarla posteriormente en el archivo `.env`.
-
-**Importante:**
-
-- La API Key es privada y no debe compartirse.
-- No debe incluirse en el código fuente ni subirse a GitHub.
-- El uso de la API puede generar costes según el modelo y las peticiones realizadas.
-- Puede ser necesario configurar la facturación en OpenAI Platform.
+No compartir la clave ni incluirla en el código fuente.
 
 ## 2. Clonar el repositorio
-
-Desde PowerShell, ejecutar:
 
 ```powershell
 git clone https://github.com/Mater-AI-Engineering-202611/estimador-cag.git
 cd estimador-cag
 ```
 
-**Nota:** verificar que la URL corresponde al repositorio publicado en GitHub.
+Comprobar que la URL corresponde al repositorio publicado. Si los cambios Multi-turn todavía están en una rama de desarrollo, seleccionar esa rama antes de instalar las dependencias.
 
 ## 3. Instalar dependencias
 
-Desde la raíz del proyecto:
-
 ```powershell
-uv sync --frozen
+uv sync --locked --dev
 ```
 
-Este comando instala las dependencias definidas en `pyproject.toml`, utilizando las versiones de `uv.lock`.
+El comando instala las dependencias de `pyproject.toml` utilizando `uv.lock`, comprueba que el lockfile está actualizado y crea `.venv` si es necesario.
 
-También crea el entorno virtual `.venv` si no existe.
+Si todavía no se ha incorporado pytest-asyncio durante el desarrollo de la rama:
+
+```powershell
+uv add --dev pytest-asyncio
+```
+
+Versionar los cambios de `pyproject.toml` y `uv.lock`. Una vez actualizados, no es necesario volver a añadir la dependencia al clonar el proyecto.
 
 ## 4. Configurar variables de entorno
 
-Crear un archivo `.env` a partir de `.env.example`:
+Crear `.env` a partir de la plantilla si todavía no existe:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Abrir el archivo `.env` y configurar las variables:
+Configurar:
 
 ```dotenv
 OPENAI_API_KEY=tu_api_key
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-4o-mini
+APP_ENV=development
 ```
 
-Sustituir `tu_api_key` por la clave obtenida desde OpenAI Platform.
+Sustituir `tu_api_key` por la clave real. `.env` debe estar excluido del control de versiones mediante `.gitignore`.
 
-**Importante:** nunca subir `.env` al repositorio. Este archivo debe estar incluido en `.gitignore`.
+No se necesitan variables adicionales para Multi-turn.
 
 ## 5. Ejecutar la aplicación
-
-Desde la raíz del proyecto:
 
 ```powershell
 uv run uvicorn app.main:app --reload --port 8001
 ```
 
-La API estará disponible en:
+La API estará disponible en http://localhost:8001.
 
-http://localhost:8001
+`--reload` reinicia el proceso al detectar cambios de código. Esto implica perder las conversaciones almacenadas en RAM.
 
-El parámetro `--reload` reinicia automáticamente el servidor cuando detecta cambios en el código.
-
-Si el puerto `8001` está ocupado, podemos utilizar otro:
+Si el puerto está ocupado, se puede utilizar otro:
 
 ```powershell
 uv run uvicorn app.main:app --reload --port 8002
 ```
 
-En ese caso, también debemos cambiar el puerto en las URLs utilizadas para acceder a la aplicación.
-
-Para detener el servidor, pulsar `Ctrl + C` en la terminal.
+Adaptar las URLs al puerto elegido. Para detener el servidor, pulsar `Ctrl + C`.
 
 ## 6. Comprobar el funcionamiento
 
 ### Health Check
 
-Abrir:
-
-http://localhost:8001/health
-
-Respuesta esperada:
+Abrir http://localhost:8001/health.
 
 ```json
-{
-  "status": "healthy"
-}
+{"status": "healthy"}
 ```
 
-### Documentación Swagger
+### Swagger
 
-Abrir:
+Abrir http://localhost:8001/docs.
 
-http://localhost:8001/docs
+- Single-turn: probar `POST /api/v1/estimate` con una transcripción.
+- Multi-turn: probar `POST /api/v1/conversation/estimate` sin identificador y copiar el `conversation_id` devuelto. Enviar una segunda petición con ese identificador y un refinamiento.
 
-Desde Swagger podemos probar el endpoint:
-
-`POST /api/v1/estimate`
-
-Para generar una estimación real, es necesario haber configurado correctamente la API Key de OpenAI.
+Las llamadas reales requieren una API Key válida y pueden generar costes.
 
 ## 7. Ejecutar pruebas automatizadas
 
@@ -167,39 +127,24 @@ Para generar una estimación real, es necesario haber configurado correctamente 
 uv run python -m pytest -v
 ```
 
-Los tests comprueban:
+La suite actual contiene 42 casos previstos, incluidos los parametrizados. Comprueba el contexto CAG, historial, aislamiento, Sliding Window, servicio LLM, endpoints y health check.
 
-- Funcionamiento del endpoint de salud.
-- Validación de transcripciones.
-- Generación de estimaciones mediante mocks.
-- Existencia de ejemplos CAG.
-- Construcción del system prompt.
-
-Las pruebas automatizadas utilizan mocks y no necesitan consumir créditos de OpenAI.
+Los tests utilizan mocks y no necesitan una API Key real ni consumen tokens de OpenAI.
 
 ## 8. Comprobar calidad del código
 
 ```powershell
 uv run ruff check .
+uv run ruff format --check .
 ```
 
-Este comando analiza el código para detectar posibles problemas de calidad y estilo.
+El primer comando realiza análisis estático; el segundo comprueba el formato sin modificar los ficheros.
 
 ## 9. Integración continua
 
-El repositorio dispone de un workflow de GitHub Actions.
+El workflow existente se encuentra en `.github/workflows/ci.yml`. Está previsto para eventos `push` y `pull_request`.
 
-Cuando se realiza un `push` o se abre un Pull Request, se ejecutan automáticamente:
-
-- Instalación de dependencias.
-- Verificación de la estructura del proyecto.
-- Ejecución de tests.
-
-El workflow se encuentra en:
-
-`.github/workflows/ci.yml`
-
-**Nota:** comprobar que la carpeta se llama `workflows` (en plural), ya que GitHub Actions requiere esa ubicación.
+Comprobar que sincroniza las dependencias de desarrollo, incluyendo pytest-asyncio, y ejecuta la suite de pruebas. La validación del workflow actualizado queda pendiente de confirmar.
 
 ## 10. Resumen de comandos
 
@@ -207,13 +152,14 @@ El workflow se encuentra en:
 |---|---|
 | Comprobar Python | `python --version` |
 | Comprobar uv | `uv --version` |
-| Instalar dependencias | `uv sync --frozen` |
+| Instalar dependencias | `uv sync --locked --dev` |
 | Crear `.env` | `Copy-Item .env.example .env` |
 | Arrancar API | `uv run uvicorn app.main:app --reload --port 8001` |
 | Ejecutar tests | `uv run python -m pytest -v` |
 | Comprobar código | `uv run ruff check .` |
+| Comprobar formato | `uv run ruff format --check .` |
 
-**URLs principales:**
+URLs principales:
 
 - API: http://localhost:8001
 - Health Check: http://localhost:8001/health
