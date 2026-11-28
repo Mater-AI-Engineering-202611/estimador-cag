@@ -1,5 +1,5 @@
 from app.context.examples import ESTIMATION_EXAMPLES
-from app.services.llm_service import build_system_prompt
+from app.prompts.estimation import build_system_prompt
 
 
 def test_context_has_two_examples():
